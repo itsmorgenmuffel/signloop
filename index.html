@@ -11,7 +11,16 @@
 <main>
 <div id="notice" class="notice" role="alert" hidden></div>
 
-<section id="select" aria-labelledby="selH">
+<section id="home" aria-labelledby="homeH">
+  <h2 id="homeH">Was möchtest du lernen?</h2>
+  <div class="home">
+    <button id="goVocab" type="button" class="big primary">Vokabeln lernen<span>Wörter mit Gebärdenvideo</span></button>
+    <button id="goAlpha" type="button" class="big alt">Fingeralphabet<span>Buchstaben inklusive Ä, Ö, Ü und SCH</span></button>
+  </div>
+</section>
+
+<section id="select" aria-labelledby="selH" hidden>
+  <p><button id="toHome" type="button" class="link">Zur Startseite</button></p>
   <h2 id="selH">Vokabeln auswählen</h2>
   <p id="count" class="muted" aria-live="polite"></p>
   <p id="stats" class="muted"></p>
@@ -63,11 +72,58 @@
     <button id="back" type="button">Zur Auswahl</button>
   </div>
 </section>
+
+<section id="aSelect" aria-labelledby="aSelH" hidden>
+  <p><button id="aHome" type="button" class="link">Zur Startseite</button></p>
+  <h2 id="aSelH">Fingeralphabet</h2>
+  <p id="aCount" class="muted" aria-live="polite"></p>
+  <p id="aStats" class="muted"></p>
+  <div id="aGrid" class="letters" role="group" aria-label="Buchstaben"></div>
+  <div id="aNote" class="muted"></div>
+  <div class="row">
+    <button id="aAll" type="button">Alle Buchstaben auswählen</button>
+    <button id="aNone" type="button">Auswahl aufheben</button>
+  </div>
+  <div class="bar">
+    <p id="aMsg" class="error" role="alert"></p>
+    <button id="aStart" type="button" class="primary">Fingeralphabet üben</button>
+  </div>
+  <p><button id="aReset" type="button" class="link">Fingeralphabet-Fortschritt zurücksetzen</button></p>
+</section>
+
+<section id="aLearn" aria-label="Fingeralphabet üben" hidden>
+  <div class="row between">
+    <p id="aProgText" class="muted" aria-live="polite"></p>
+    <button id="aEnd" type="button" class="link">Sitzung beenden</button>
+  </div>
+  <progress id="aProgress" value="0" max="1" aria-label="Fortschritt"></progress>
+  <div id="aMedia" class="media"></div>
+  <div id="aVmsg" class="vmsg" aria-live="polite"></div>
+  <div class="row center"><button id="aReplay" type="button">Video abspielen</button></div>
+  <div class="answer" aria-live="polite"><p id="aLetter" class="meaning" hidden></p></div>
+  <div class="actions">
+    <button id="aReveal" type="button">Buchstaben anzeigen</button>
+    <button id="aPractice" type="button">Noch üben</button>
+    <button id="aLearned" type="button" class="primary">Gelernt</button>
+    <button id="aSkip" type="button">Überspringen</button>
+  </div>
+</section>
+
+<section id="aDone" aria-labelledby="aDoneH" hidden>
+  <h2 id="aDoneH" tabindex="-1">Runde beendet</h2>
+  <p>Gelernt in dieser Runde: <strong id="aDLearned">0</strong></p>
+  <p>Noch zu üben: <strong id="aDRem">0</strong></p>
+  <div class="actions">
+    <button id="aRepeat" type="button" class="primary">Schwierige Buchstaben wiederholen</button>
+    <button id="aAgain" type="button">Neue zufällige Runde</button>
+    <button id="aBack" type="button">Zur Buchstabenauswahl</button>
+  </div>
+</section>
 </main>
 
 <dialog id="dlg" aria-labelledby="dlgH">
   <h2 id="dlgH">Fortschritt zurücksetzen?</h2>
-  <p>Alle gespeicherten Lernstände und Statistiken werden gelöscht. Das kann nicht rückgängig gemacht werden.</p>
+  <p id="dlgText"></p>
   <div class="row"><button id="dlgNo" type="button">Abbrechen</button><button id="dlgYes" type="button" class="danger">Zurücksetzen</button></div>
 </dialog>
 <script src="app.js"></script>

@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ÖGS Vokabeltrainer</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="top"><h1>ÖGS Vokabeltrainer</h1><p>Österreichische Gebärdensprache</p></header>
+<main>
+<div id="notice" class="notice" role="alert" hidden></div>
+
+<section id="select" aria-labelledby="selH">
+  <h2 id="selH">Vokabeln auswählen</h2>
+  <p id="count" class="muted" aria-live="polite"></p>
+  <p id="stats" class="muted"></p>
+  <div id="letters" class="letters" role="group" aria-label="Anfangsbuchstaben"></div>
+  <div class="row">
+    <label class="grow"><span class="sr">Suche nach deutscher Bedeutung</span>
+      <input id="search" type="search" placeholder="Suchen (deutsche Bedeutung)" autocomplete="off"></label>
+    <button id="selAll" type="button">Alle auswählen</button>
+    <button id="selHits" type="button" hidden>Treffer auswählen</button>
+    <button id="selNone" type="button">Auswahl aufheben</button>
+  </div>
+  <ul id="list" class="list"></ul>
+  <label class="check"><input id="ctrl" type="checkbox"> Videosteuerung anzeigen</label>
+  <div class="bar">
+    <p id="selMsg" class="error" role="alert"></p>
+    <button id="start" type="button" class="primary">Lernen starten</button>
+  </div>
+  <p><button id="reset" type="button" class="link">Fortschritt zurücksetzen</button></p>
+</section>
+
+<section id="learn" aria-label="Lernmodus" hidden>
+  <div class="row between">
+    <p id="progText" class="muted" aria-live="polite"></p>
+    <button id="end" type="button" class="link">Sitzung beenden</button>
+  </div>
+  <progress id="progress" value="0" max="1" aria-label="Fortschritt"></progress>
+  <div id="media" class="media"></div>
+  <div id="vmsg" class="vmsg" aria-live="polite"></div>
+  <div class="row center"><button id="replay" type="button">Video abspielen</button></div>
+  <div class="answer" aria-live="polite">
+    <p id="meaning" class="meaning" hidden></p>
+    <p id="notes" class="muted" hidden></p>
+  </div>
+  <div class="actions">
+    <button id="reveal" type="button">Bedeutung anzeigen</button>
+    <button id="practice" type="button">Noch üben</button>
+    <button id="learned" type="button" class="primary">Gelernt</button>
+    <button id="skip" type="button">Überspringen</button>
+  </div>
+</section>
+
+<section id="done" aria-labelledby="doneH" hidden>
+  <h2 id="doneH" tabindex="-1">Runde beendet</h2>
+  <p>Gelernt in dieser Runde: <strong id="dLearned">0</strong></p>
+  <p>Noch zu üben: <strong id="dRem">0</strong></p>
+  <div class="actions">
+    <button id="repeat" type="button" class="primary">Schwierige Vokabeln wiederholen</button>
+    <button id="again" type="button">Neue zufällige Runde</button>
+    <button id="back" type="button">Zur Auswahl</button>
+  </div>
+</section>
+</main>
+
+<dialog id="dlg" aria-labelledby="dlgH">
+  <h2 id="dlgH">Fortschritt zurücksetzen?</h2>
+  <p>Alle gespeicherten Lernstände und Statistiken werden gelöscht. Das kann nicht rückgängig gemacht werden.</p>
+  <div class="row"><button id="dlgNo" type="button">Abbrechen</button><button id="dlgYes" type="button" class="danger">Zurücksetzen</button></div>
+</dialog>
+<script src="app.js"></script>
+</body>
+</html>

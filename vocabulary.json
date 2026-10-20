@@ -1,0 +1,16 @@
+[
+  {
+    "id": "hallo",
+    "meaning": "Hallo",
+    "videoUrl": "https://example.com/hallo.mp4",
+    "category": "Begrüßung",
+    "notes": ""
+  },
+  {
+    "id": "danke",
+    "meaning": "Danke",
+    "videoUrl": "https://example.com/danke.mp4",
+    "category": "Alltag",
+    "notes": ""
+  }
+]

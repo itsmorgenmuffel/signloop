@@ -16,7 +16,8 @@ const el = (tag, attrs = {}, ...kids) => {
   e.append(...kids);
   return e;
 };
-const showView = n => ['select', 'learn', 'done'].forEach(s => { $(s).hidden = s !== n; });
+const VIEWS = ['home', 'select', 'learn', 'done', 'aSelect', 'aLearn', 'aDone'];
+const showView = n => VIEWS.forEach(s => { $(s).hidden = s !== n; });
 
 let vocab = [], byId = new Map(), sel = new Set(), query = '', S = null;
 const notes = [];
@@ -27,19 +28,24 @@ function notice(msg) {
 }
 
 /* ---------- Persistenz (localStorage, mit Validierung) ---------- */
+const cleanProgress = o => {
+  const p = {};
+  for (const [k, v] of Object.entries(o || {}))
+    if (v && Number.isInteger(v.level) && v.level >= 0 && v.level <= 3) p[k] = { level: v.level, last: +v.last || 0 };
+  return p;
+};
 function load() {
-  const d = { progress: {}, stats: { rounds: 0 }, selection: [], prefs: { controls: false } };
+  const d = { progress: {}, stats: { rounds: 0 }, selection: [], prefs: { controls: false }, alpha: { progress: {}, selection: [] } };
   let raw = null;
   try { raw = localStorage.getItem(KEY); } catch (e) { notice('Lokaler Speicher ist nicht verfügbar – Fortschritt wird nicht gespeichert.'); }
   if (raw === null) return d;
   try {
     const r = JSON.parse(raw);
     if (!r || typeof r !== 'object' || Array.isArray(r)) throw new Error('format');
-    const progress = {};
-    for (const [k, v] of Object.entries(r.progress || {}))
-      if (v && Number.isInteger(v.level) && v.level >= 0 && v.level <= 3) progress[k] = { level: v.level, last: +v.last || 0 };
+    const ra = r.alpha && typeof r.alpha === 'object' ? r.alpha : {};
     return {
-      progress,
+      progress: cleanProgress(r.progress),
+      alpha: { progress: cleanProgress(ra.progress), selection: Array.isArray(ra.selection) ? ra.selection.filter(x => typeof x === 'string') : [] },
       stats: { rounds: +(r.stats && r.stats.rounds) || 0 },
       selection: Array.isArray(r.selection) ? r.selection.filter(x => typeof x === 'string') : [],
       prefs: { controls: !!(r.prefs && r.prefs.controls) }
@@ -60,14 +66,14 @@ function save() {
    "Gelernt" setzt ein Wort höchstens auf "Gelernt" (2). "Gefestigt" (3) gibt es erst,
    wenn es später (mehr als 24 h danach) erneut als gelernt markiert wird.
    "Noch üben" setzt das Wort zurück auf "In Übung" (1). */
-const lvl = id => (state.progress[id] || { level: 0 }).level;
-function markLearned(id) {
-  const p = state.progress[id] || { level: 0, last: 0 }, now = Date.now();
+const lvl = (id, st = state.progress) => (st[id] || { level: 0 }).level;
+function markLearned(id, st = state.progress) {
+  const p = st[id] || { level: 0, last: 0 }, now = Date.now();
   if (p.level < 2) p.level = 2;
   else if (p.level === 2 && now - p.last > DAY) p.level = 3;
-  p.last = now; state.progress[id] = p; save();
+  p.last = now; st[id] = p; save();
 }
-function markPractice(id) { state.progress[id] = { level: 1, last: Date.now() }; save(); }
+function markPractice(id, st = state.progress) { st[id] = { level: 1, last: Date.now() }; save(); }
 
 /* ---------- Auswahl ---------- */
 const letterOf = m => {
@@ -183,34 +189,159 @@ function mediaFor(url) {
     return { type: 'iframe', src: `https://player.vimeo.com/video/${m[1]}?muted=1&autoplay=1&loop=1` };
   return { type: 'iframe', src: u.href };   // unbekannter Anbieter: Einbettung versuchen
 }
-function stopVideo() {
-  $('media').querySelectorAll('video').forEach(v => { v.pause(); v.removeAttribute('src'); v.load(); });
-  $('media').replaceChildren(); $('vmsg').replaceChildren();
+function stopVideo(m = $('media'), g = $('vmsg')) {
+  m.querySelectorAll('video').forEach(v => { v.pause(); v.removeAttribute('src'); v.load(); });
+  m.replaceChildren(); g.replaceChildren();
 }
 const openLink = url => el('p', {}, el('a', { href: url, target: '_blank', rel: 'noopener noreferrer', text: 'Original-Video in neuem Tab öffnen' }));
-function loadVideo(it) {
-  stopVideo();
-  const m = mediaFor(it.videoUrl), msg = $('vmsg');
+// media/msg: Zielcontainer – Vokabeln und Fingeralphabet haben je eigene Elemente.
+function loadVideo(it, media = $('media'), msg = $('vmsg')) {
+  stopVideo(media, msg);
+  const m = mediaFor(it.videoUrl);
   const fail = t => msg.replaceChildren(el('p', { text: t }), ...(m ? [openLink(it.videoUrl)] : []));
-  $('media').className = 'media' + (m && m.type === 'iframe' ? ' embed' : '');
+  media.className = 'media' + (m && m.type === 'iframe' ? ' embed' : '');
   if (!m) return fail('Ungültige Video-Adresse.');
   if (m.type === 'file') {
     const v = el('video', { loop: '', playsinline: '', preload: 'auto', 'aria-label': 'Gebärdenvideo' });
     v.muted = true; v.autoplay = true; v.controls = state.prefs.controls;
     v.addEventListener('error', () => { if (v.isConnected) fail('Das Video konnte nicht geladen werden (Adresse falsch, Datei fehlt oder Zugriff gesperrt).'); });
-    v.src = m.src; $('media').append(v);
+    v.src = m.src; media.append(v);
     const p = v.play();
     if (p && p.catch) p.catch(() => { if (v.isConnected && !v.error) msg.replaceChildren(el('p', { text: 'Autoplay wurde vom Browser blockiert. Bitte „Video abspielen“ drücken.' })); });
   } else {
     const f = el('iframe', { title: 'Gebärdenvideo', allow: 'autoplay; fullscreen; picture-in-picture', allowfullscreen: '', referrerpolicy: 'no-referrer', sandbox: 'allow-scripts allow-same-origin allow-presentation' });
-    f.src = m.src; $('media').append(f);
+    f.src = m.src; media.append(f);
     msg.replaceChildren(el('p', { class: 'muted', text: 'Eingebettetes Video. Wird nichts angezeigt, erlaubt der Anbieter keine Einbettung.' }), openLink(it.videoUrl));
   }
 }
-function replay() {
-  const v = $('media').querySelector('video'), f = $('media').querySelector('iframe');
+function replay(media = $('media')) {
+  const v = media.querySelector('video'), f = media.querySelector('iframe');
   if (v) { v.currentTime = 0; const p = v.play(); if (p && p.catch) p.catch(() => {}); }
   else if (f) f.src = f.src;
+}
+
+/* ---------- Fingeralphabet (eigener Bereich, eigener Fortschritt: state.alpha) ----------
+   Einträge kommen aus vocabulary.json (IDs "fingeralphabet-…"), nie aus der Vokabelliste. */
+const ALPHA_ORDER = [...'abcdefghijklmnopqrstuvwxyz', 'ae', 'oe', 'ue', 'sch'];
+const ALPHA_LABEL = { ae: 'Ä', oe: 'Ö', ue: 'Ü', sch: 'SCH' };
+const aLabel = k => ALPHA_LABEL[k] || k.toUpperCase();
+let alphaData = new Map(), aSel = new Set(), A = null;
+const aHasVideo = k => { const e = alphaData.get(k); return !!(e && e.videoUrl && mediaFor(e.videoUrl)); };
+const aAvail = () => ALPHA_ORDER.filter(aHasVideo);
+const aPersist = () => { state.alpha.selection = [...aSel]; save(); };
+
+function aBuild() {
+  const g = $('aGrid'); g.replaceChildren();
+  for (const k of ALPHA_ORDER) {
+    const ok = aHasVideo(k);
+    const attrs = {
+      type: 'button', class: 'letter', 'data-key': k, 'aria-pressed': 'false', text: aLabel(k),
+      'aria-label': aLabel(k) + (ok ? '' : ' (nicht verfügbar)'),
+      onclick: () => { aSel.has(k) ? aSel.delete(k) : aSel.add(k); aPersist(); aRefresh(); }
+    };
+    if (!ok) { attrs.disabled = ''; attrs.title = 'Nicht verfügbar'; }
+    g.append(el('button', attrs));
+  }
+  const miss = ALPHA_ORDER.filter(k => !aHasVideo(k));
+  const noEntry = miss.filter(k => !alphaData.has(k)).map(aLabel), noUrl = miss.filter(k => alphaData.has(k)).map(aLabel);
+  const n = $('aNote'); n.replaceChildren();
+  if (noUrl.length) n.append(el('p', { text: `Nicht verfügbar (kein gültiger Video-Link in vocabulary.json): ${noUrl.join(', ')}` }));
+  if (noEntry.length) n.append(el('p', { text: `Nicht verfügbar (kein Eintrag in vocabulary.json): ${noEntry.join(', ')}` }));
+}
+function aRefresh() {
+  const available = aAvail();
+  const availableSet = new Set(available);
+
+  // Nur verfügbare Buchstaben als ausgewählt zählen
+  aSel = new Set([...aSel].filter(k => availableSet.has(k)));
+
+  document.querySelectorAll('#aGrid button').forEach(b => {
+    b.setAttribute('aria-pressed', String(aSel.has(b.dataset.key)));
+  });
+
+  const c = [0, 0, 0, 0];
+
+  available.forEach(k => {
+    c[lvl('fingeralphabet-' + k, state.alpha.progress)]++;
+  });
+
+  $('aCount').textContent =
+    `${available.length} Buchstaben verfügbar · ${aSel.size} ausgewählt`;
+
+  $('aStats').textContent =
+    LEVELS.map((n, i) => `${n}: ${c[i]}`).join(' · ');
+}
+function aStart(keys) {
+  keys = keys.filter(aHasVideo);
+  if (!keys.length) return;
+  A = { queue: shuffle(keys), learned: new Set(), practice: new Set(), total: keys.length };
+  showView('aLearn'); aShow();
+}
+function aShow() {
+  const k = A.queue[0];
+  $('aProgress').max = A.total; $('aProgress').value = A.learned.size;
+  $('aProgText').textContent = `Noch ${A.queue.length} von ${A.total} Buchstaben · gelernt: ${A.learned.size}`;
+  $('aLetter').textContent = aLabel(k); $('aLetter').hidden = true; $('aReveal').disabled = false;
+  loadVideo(alphaData.get(k), $('aMedia'), $('aVmsg'));
+}
+function aAnswer(kind) {
+  if (!A || !A.queue.length) return;
+  const st = state.alpha.progress;
+  if (kind === 'skip') {
+    if (A.queue.length < 2) { $('aVmsg').replaceChildren(el('p', { text: 'Das ist der letzte Buchstabe – bitte „Gelernt“ oder „Noch üben“ wählen.' })); return; }
+    A.queue.push(A.queue.shift());
+  } else {
+    const k = A.queue.shift(), id = 'fingeralphabet-' + k;
+    if (kind === 'learned') { A.learned.add(k); A.practice.delete(k); markLearned(id, st); }
+    else {
+      A.practice.add(k); markPractice(id, st);
+      if (!A.queue.length) { aFinish(); return; }
+      A.queue.splice(Math.min(GAP, A.queue.length), 0, k);
+    }
+  }
+  A.queue.length ? aShow() : aFinish();
+}
+function aFinish() {
+  stopVideo($('aMedia'), $('aVmsg'));
+  A.rem = [...new Set([...A.queue, ...A.practice])].filter(k => !A.learned.has(k));
+  $('aDLearned').textContent = A.learned.size; $('aDRem').textContent = A.rem.length;
+  $('aRepeat').disabled = !A.rem.length;
+  showView('aDone'); $('aDoneH').focus();
+}
+function bindAlpha() {
+  $('goVocab').onclick = () => { renderList(); showView('select'); };
+  $('goAlpha').onclick = () => { aRefresh(); showView('aSelect'); };
+  $('toHome').onclick = () => showView('home');
+  $('aHome').onclick = () => showView('home');
+  $('aAll').onclick = () => { aAvail().forEach(k => aSel.add(k)); aPersist(); aRefresh(); };
+  $('aNone').onclick = () => { aSel.clear(); aPersist(); aRefresh(); };
+  $('aStart').onclick = () => {
+    if (!aSel.size) { $('aMsg').textContent = 'Bitte wähle mindestens einen Buchstaben aus.'; return; }
+    $('aMsg').textContent = ''; aStart([...aSel]);
+  };
+  $('aReveal').onclick = () => { $('aLetter').hidden = false; $('aReveal').disabled = true; };
+  $('aPractice').onclick = () => aAnswer('practice');
+  $('aLearned').onclick = () => aAnswer('learned');
+  $('aSkip').onclick = () => aAnswer('skip');
+  $('aReplay').onclick = () => replay($('aMedia'));
+  $('aEnd').onclick = () => { if (A) aFinish(); };
+  $('aRepeat').onclick = () => aStart(A.rem);
+  $('aAgain').onclick = () => aStart([...aSel]);
+  $('aBack').onclick = () => { aRefresh(); showView('aSelect'); };
+  $('aReset').onclick = () => askReset('alpha');
+}
+let dlgTarget = 'vocab';
+function askReset(t) {
+  dlgTarget = t;
+  $('dlgText').textContent = t === 'alpha'
+    ? 'Alle Lernstände im Fingeralphabet werden gelöscht. Der Vokabel-Fortschritt bleibt erhalten. Das kann nicht rückgängig gemacht werden.'
+    : 'Alle gespeicherten Lernstände und Statistiken der Vokabeln werden gelöscht. Der Fingeralphabet-Fortschritt bleibt erhalten. Das kann nicht rückgängig gemacht werden.';
+  if ($('dlg').showModal) $('dlg').showModal();
+  else if (confirm('Fortschritt wirklich zurücksetzen?')) doReset();
+}
+function doReset() {
+  if (dlgTarget === 'alpha') { state.alpha.progress = {}; save(); aRefresh(); }
+  else resetProgress();
 }
 
 /* ---------- Start ---------- */
@@ -232,17 +363,15 @@ function bind() {
   $('practice').onclick = () => answer('practice');
   $('learned').onclick = () => answer('learned');
   $('skip').onclick = () => answer('skip');
-  $('replay').onclick = replay;
+  $('replay').onclick = () => replay();
   $('end').onclick = () => { if (S) finish(); };
   $('repeat').onclick = () => startSession(S.rem);
   $('again').onclick = () => startSession(selectedIds());
   $('back').onclick = () => { renderList(); showView('select'); };
-  $('reset').onclick = () => {
-    if ($('dlg').showModal) $('dlg').showModal();
-    else if (confirm('Fortschritt wirklich zurücksetzen?')) resetProgress();
-  };
+  $('reset').onclick = () => askReset('vocab');
   $('dlgNo').onclick = () => $('dlg').close();
-  $('dlgYes').onclick = () => { $('dlg').close(); resetProgress(); };
+  $('dlgYes').onclick = () => { $('dlg').close(); doReset(); };
+  bindAlpha();
 }
 async function init() {
   bind();
@@ -258,6 +387,12 @@ async function init() {
   if (!Array.isArray(data)) { notice('vocabulary.json muss eine Liste (Array) sein.'); data = []; }
   const seen = new Set(); let bad = 0;
   for (const v of data) {
+    // Fingeralphabet-Einträge gehören nicht zur Vokabelliste, sondern in den eigenen Bereich.
+    if (v && typeof v.id === 'string' && v.id.startsWith('fingeralphabet-')) {
+      const k = v.id.slice(15);
+      if (!alphaData.has(k)) alphaData.set(k, { id: v.id, videoUrl: typeof v.videoUrl === 'string' ? v.videoUrl.trim() : '' });
+      continue;
+    }
     const ok = v && typeof v.id === 'string' && v.id && typeof v.meaning === 'string' && v.meaning.trim() && typeof v.videoUrl === 'string' && !seen.has(v.id);
     if (!ok) { bad++; continue; }
     seen.add(v.id);
@@ -269,5 +404,7 @@ async function init() {
   byId = new Map(vocab.map(v => [v.id, v]));
   sel = new Set(state.selection.filter(id => byId.has(id)));
   buildLetters(); renderList();
+  aSel = new Set(state.alpha.selection.filter(id => id.startsWith('fingeralphabet-')).map(id => id.slice(15)).filter(aHasVideo));
+  aBuild(); aRefresh();
 }
 init();

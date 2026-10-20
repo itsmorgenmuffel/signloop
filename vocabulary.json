@@ -1,16 +1,73 @@
 [
   {
-    "id": "hallo",
-    "meaning": "Hallo",
-    "videoUrl": "https://example.com/hallo.mp4",
-    "category": "Begrüßung",
+    "id": "ich",
+    "meaning": "ich",
+    "videoUrl": "https://gebaerden-archiv.at/media/videos/5bf65d25-9d87-4b85-bf55-b6f2ba2ccf5c.mp4",
+    "category": "Vorstellung",
     "notes": ""
   },
   {
-    "id": "danke",
-    "meaning": "Danke",
-    "videoUrl": "https://example.com/danke.mp4",
+    "id": "mein",
+    "meaning": "mein",
+    "videoUrl": "https://gebaerden-archiv.at/media/videos/1521db24-6055-4494-a1c8-03d1d9043f81.mp4",
     "category": "Alltag",
     "notes": ""
+  },
+  {
+    "id": "Du",
+    "meaning": "Du",
+    "videoUrl": "https://gebaerden-archiv.at/media/videos/13ae0f3b-3e74-4a4f-be78-a9b040b024fb.mp4",
+    "category": "Vorstellung",
+    "notes": ""
+  },
+  {
+    "id": "dein",
+    "meaning": "dein",
+    "videoUrl": "https://gebaerden-archiv.at/media/videos/6670dec1-3254-433c-9405-c6656bc5d68c.mp4",
+    "category": "Vorstellung",
+    "notes": ""
+  },
+  {
+    "id": "der Name",
+    "meaning": "der Name",
+    "videoUrl": "https://gebaerden-archiv.at/media/videos/8e2355ee-332c-4c9b-8bcc-068b14090c88.mp4",
+    "category": "Vorstellung",
+    "notes": ""
+  },
+  {
+    "id": "wo",
+    "meaning": "wo",
+    "videoUrl": "https://gebaerden-archiv.at/media/videos/d53360b6-8a24-4424-b71e-79662d08bbc1.mp4",
+    "category": "Frage + wörter",
+    "notes": ""
+  },
+  {
+    "id": "woher",
+    "meaning": "woher",
+    "videoUrl": "https://gebaerden-archiv.at/media/videos/e98c1bc3-5b9b-4ddd-8a68-b3c404f345ca.mp4",
+    "category": "Frage + wörter",
+    "notes": ""
+  },
+   {
+    "id": "Was",
+    "meaning": "was",
+    "videoUrl": "https://gebaerden-archiv.at/media/videos/7fc190b9-db73-4518-96c8-f1181ca995d6.mp4",
+    "category": "Frage + wörter",
+    "notes": ""
+  },
+   {
+    "id": "wie",
+    "meaning": "wie",
+    "videoUrl": "https://gebaerden-archiv.at/media/videos/9d146389-4979-4d1c-af18-05c84c555dc7.mp4",
+    "category": "Frage + wörter",
+    "notes": ""
+  },
+   {
+    "id": "wer",
+    "meaning": "wer",
+    "videoUrl": "https://gebaerden-archiv.at/media/videos/bf5538aa-285a-4d43-bad6-f7ac2e73c74d.mp4",
+    "category": "Frage + wörter",
+    "notes": ""
   }
+  
 ]

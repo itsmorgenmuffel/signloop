@@ -68,6 +68,97 @@
     "videoUrl": "https://gebaerden-archiv.at/media/videos/bf5538aa-285a-4d43-bad6-f7ac2e73c74d.mp4",
     "category": "Frage + wörter",
     "notes": ""
-  }
+  },
+{
+  "id": "gebaerdensprache",
+  "meaning": "Gebärdensprache",
+  "videoUrl": "https://gebaerden-archiv.at/media/videos/7e54f13e-8a31-47e9-8edd-053fe24b0d8e.mp4",
+  "category": "Kommunikation/Basisgebärden",
+  "notes": ""
+},
+{
+  "id": "gebaerden",
+  "meaning": "gebärden",
+  "videoUrl": "https://gebaerden-archiv.at/media/videos/3f8177b5-6b0f-401d-a972-c8741ce76a53.mp4",
+  "category": "Kommunikation/Basisgebärden",
+  "notes": ""
+},
+{
+  "id": "ja",
+  "meaning": "Ja",
+  "videoUrl": "https://gebaerden-archiv.at/media/videos/cefab913-516c-41cc-8c48-6b06169e8286.mp4",
+  "category": "Kommunikation/Basisgebärden",
+  "notes": ""
+},
+{
+  "id": "nein",
+  "meaning": "Nein",
+  "videoUrl": "https://gebaerden-archiv.at/media/videos/2445c006-4b45-48a4-827d-e9b6db73d445.mp4",
+  "category": "Kommunikation/Basisgebärden",
+  "notes": ""
+},
+{
+  "id": "bitte",
+  "meaning": "Bitte",
+  "videoUrl": "https://gebaerden-archiv.at/media/videos/e1cf9559-8e8a-48c6-ad49-dcd9ae20f298.mp4",
+  "category": "Kommunikation/Basisgebärden",
+  "notes": ""
+},
+{
+  "id": "nochmal",
+  "meaning": "Nochmal",
+  "videoUrl": "https://gebaerden-archiv.at/media/videos/593f224e-5385-4d87-9f99-979b171443f4.mp4",
+  "category": "Kommunikation/Basisgebärden",
+  "notes": ""
+},
+{
+  "id": "buchstabieren",
+  "meaning": "Buchstabieren (Übereinstimmungsverb)",
+  "videoUrl": "https://gebaerden-archiv.at/media/videos/0fdfa049-6f90-4d47-bea6-5d5058b0777f.mp4",
+  "category": "Kommunikation/Basisgebärden",
+  "notes": ""
+},
+{
+  "id": "passt",
+  "meaning": "Passt",
+  "videoUrl": "https://gebaerden-archiv.at/media/videos/65729d0a-9d02-484b-a9b8-64f1b8e50979.mp4",
+  "category": "Kommunikation/Basisgebärden",
+  "notes": ""
+},
+{
+  "id": "danke",
+  "meaning": "Danke",
+  "videoUrl": "https://gebaerden-archiv.at/media/videos/2de2e99b-9ba8-4824-b943-2142baf464d0.mp4",
+  "category": "Kommunikation/Basisgebärden",
+  "notes": ""
+},
+{
+  "id": "gerne",
+  "meaning": "Gerne (gern geschehen)",
+  "videoUrl": "https://gebaerden-archiv.at/media/videos/423b7cdf-50fe-4cab-b9eb-06d5a1d21043.mp4",
+  "category": "Kommunikation/Basisgebärden",
+  "notes": ""
+},
+{
+  "id": "achso",
+  "meaning": "Achso",
+  "videoUrl": "https://gebaerden-archiv.at/media/videos/7c31f8fc-52c1-4cf5-b6a8-1067faa55b97.mp4",
+  "category": "Kommunikation/Basisgebärden",
+  "notes": ""
+},
+{
+  "id": "applaus",
+  "meaning": "Applaus (beim Applaudieren normalerweise ohne Mundbild)",
+  "videoUrl": "https://gebaerden-archiv.at/media/videos/ba22c89f-9bc6-4773-8ac8-0d5189d8ab5d.mp4",
+  "category": "Kommunikation/Basisgebärden",
+  "notes": ""
+},
+{
+  "id": "wie-gehts",
+  "meaning": "Wie geht’s? (Achtung: mit F-Handform)",
+  "videoUrl": "https://gebaerden-archiv.at/media/videos/87eded07-f030-4e93-820b-4bad4daf7380.mp4",
+  "category": "Kommunikation/Basisgebärden",
+  "notes": ""
+}
   
 ]

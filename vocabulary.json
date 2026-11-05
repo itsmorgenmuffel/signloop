@@ -369,6 +369,554 @@
   "videoUrl": "https://gebaerden-archiv.at/media/videos/adc39d6d-9c58-4463-8fe0-150e6322a65b.mp4",
   "category": "Alphabet / Fingeralphabet",
   "notes": ""
-}
-  
+},
+{
+    "id": "hobbies",
+    "meaning": "Hobbies",
+    "videoUrl": "https://suche.machs-auf.at/sign/93503",
+    "category": "Hobbies",
+    "notes": ""
+  },
+  {
+    "id": "sport",
+    "meaning": "Sport",
+    "videoUrl": "https://gebaerden-archiv.at/sign/64021",
+    "category": "Sport",
+    "notes": ""
+  },
+  {
+    "id": "fussball",
+    "meaning": "Fußball",
+    "videoUrl": "https://suche.machs-auf.at/sign/22323",
+    "category": "Sport",
+    "notes": ""
+  },
+  {
+    "id": "tennis",
+    "meaning": "Tennis",
+    "videoUrl": "https://suche.machs-auf.at/sign/64176",
+    "category": "Sport",
+    "notes": ""
+  },
+  {
+    "id": "tischtennis",
+    "meaning": "Tischtennis",
+    "videoUrl": "https://suche.machs-auf.at/sign/19565",
+    "category": "Sport",
+    "notes": ""
+  },
+  {
+    "id": "laufen",
+    "meaning": "Laufen",
+    "videoUrl": "https://suche.machs-auf.at/sign/65071",
+    "category": "Sport",
+    "notes": ""
+  },
+  {
+    "id": "spazieren",
+    "meaning": "Spazieren",
+    "videoUrl": "https://suche.machs-auf.at/sign/19508",
+    "category": "Sport",
+    "notes": ""
+  },
+  {
+    "id": "wandern",
+    "meaning": "Wandern",
+    "videoUrl": "https://suche.machs-auf.at/sign/27747",
+    "category": "Sport",
+    "notes": ""
+  },
+  {
+    "id": "klettern",
+    "meaning": "Klettern",
+    "videoUrl": "https://suche.machs-auf.at/sign/41919",
+    "category": "Sport",
+    "notes": ""
+  },
+  {
+    "id": "yoga",
+    "meaning": "Yoga",
+    "videoUrl": "https://suche.machs-auf.at/sign/27673",
+    "category": "Sport",
+    "notes": ""
+  },
+  {
+    "id": "radfahren",
+    "meaning": "Radfahren",
+    "videoUrl": "https://suche.machs-auf.at/sign/45283",
+    "category": "Sport",
+    "notes": ""
+  },
+  {
+    "id": "volleyball",
+    "meaning": "Volleyball",
+    "videoUrl": "https://suche.machs-auf.at/sign/24416",
+    "category": "Sport",
+    "notes": ""
+  },
+  {
+    "id": "skifahren",
+    "meaning": "Ski fahren",
+    "videoUrl": "https://gebaerden-archiv.at/sign/25216",
+    "category": "Sport",
+    "notes": ""
+  },
+  {
+    "id": "snowboarden",
+    "meaning": "Snowboarden",
+    "videoUrl": "",
+    "category": "Sport",
+    "notes": "Video-Link noch ergänzen"
+  },
+  {
+    "id": "basketball",
+    "meaning": "Basketball",
+    "videoUrl": "https://gebaerden-archiv.at/sign/60020",
+    "category": "Sport",
+    "notes": ""
+  },
+  {
+    "id": "schwimmen",
+    "meaning": "Schwimmen",
+    "videoUrl": "https://gebaerden-archiv.at/sign/25116",
+    "category": "Sport",
+    "notes": ""
+  },
+  {
+    "id": "reiten",
+    "meaning": "Reiten",
+    "videoUrl": "https://gebaerden-archiv.at/sign/65855",
+    "category": "Sport",
+    "notes": ""
+  },
+  {
+    "id": "hobby-horsing",
+    "meaning": "Hobby Horsing",
+    "videoUrl": "",
+    "category": "Sport",
+    "notes": "Video-Link noch ergänzen"
+  },
+  {
+    "id": "handball",
+    "meaning": "Handball",
+    "videoUrl": "https://gebaerden-archiv.at/sign/60974",
+    "category": "Sport",
+    "notes": ""
+  },
+  {
+    "id": "tanzen",
+    "meaning": "Tanzen",
+    "videoUrl": "https://suche.machs-auf.at/sign/46792",
+    "category": "Sport",
+    "notes": ""
+  },
+  {
+    "id": "ballett",
+    "meaning": "Ballett",
+    "videoUrl": "https://gebaerden-archiv.at/sign/45203",
+    "category": "Sport",
+    "notes": ""
+  },
+  {
+    "id": "fechten",
+    "meaning": "Fechten",
+    "videoUrl": "https://suche.machs-auf.at/sign/43892",
+    "category": "Sport",
+    "notes": ""
+  },
+  {
+    "id": "judo",
+    "meaning": "Judo",
+    "videoUrl": "https://suche.machs-auf.at/sign/61818",
+    "category": "Sport",
+    "notes": ""
+  },
+  {
+    "id": "rollerskaten",
+    "meaning": "Rollerskaten",
+    "videoUrl": "https://suche.machs-auf.at/sign/42026",
+    "category": "Sport",
+    "notes": ""
+  },
+  {
+    "id": "skateboarden",
+    "meaning": "Skateboarden",
+    "videoUrl": "https://suche.machs-auf.at/sign/55493",
+    "category": "Sport",
+    "notes": ""
+  },
+  {
+    "id": "bogenschiessen",
+    "meaning": "Bogenschießen",
+    "videoUrl": "https://suche.machs-auf.at/sign/45636",
+    "category": "Sport",
+    "notes": ""
+  },
+  {
+    "id": "angeln",
+    "meaning": "Angeln",
+    "videoUrl": "https://gebaerden-archiv.at/sign/17921",
+    "category": "Sport",
+    "notes": ""
+  },
+  {
+    "id": "tauchen",
+    "meaning": "Tauchen",
+    "videoUrl": "https://gebaerden-archiv.at/sign/27671",
+    "category": "Sport",
+    "notes": ""
+  },
+  {
+    "id": "fitness",
+    "meaning": "Fitness",
+    "videoUrl": "https://gebaerden-archiv.at/sign/31299",
+    "category": "Sport",
+    "notes": ""
+  },
+  {
+    "id": "motorradfahren",
+    "meaning": "Motorrad fahren",
+    "videoUrl": "https://gebaerden-archiv.at/sign/63381",
+    "category": "Sport",
+    "notes": ""
+  },
+  {
+    "id": "musik",
+    "meaning": "Musik",
+    "videoUrl": "https://gebaerden-archiv.at/sign/43705",
+    "category": "Musik",
+    "notes": ""
+  },
+  {
+    "id": "gitarrespielen",
+    "meaning": "Gitarre spielen",
+    "videoUrl": "https://suche.machs-auf.at/sign/17709",
+    "category": "Musik",
+    "notes": ""
+  },
+  {
+    "id": "klavierspielen",
+    "meaning": "Klavier spielen",
+    "videoUrl": "https://suche.machs-auf.at/sign/17705",
+    "category": "Musik",
+    "notes": ""
+  },
+  {
+    "id": "geigespielen",
+    "meaning": "Geige spielen",
+    "videoUrl": "https://gebaerden-archiv.at/sign/18412",
+    "category": "Musik",
+    "notes": ""
+  },
+  {
+    "id": "singen",
+    "meaning": "Singen",
+    "videoUrl": "https://gebaerden-archiv.at/sign/36165",
+    "category": "Musik",
+    "notes": ""
+  },
+  {
+    "id": "schlagzeugspielen",
+    "meaning": "Schlagzeug spielen",
+    "videoUrl": "https://suche.machs-auf.at/sign/55763",
+    "category": "Musik",
+    "notes": "Zusätzlicher Link für spielen: https://gebaerden-archiv.at/sign/62580"
+  },
+  {
+    "id": "kochen",
+    "meaning": "Kochen",
+    "videoUrl": "https://suche.machs-auf.at/sign/40918",
+    "category": "Kochen & Backen",
+    "notes": ""
+  },
+  {
+    "id": "backen",
+    "meaning": "Backen",
+    "videoUrl": "https://suche.machs-auf.at/sign/65460",
+    "category": "Kochen & Backen",
+    "notes": ""
+  },
+  {
+    "id": "kreatives",
+    "meaning": "Kreatives",
+    "videoUrl": "https://gebaerden-archiv.at/sign/50331",
+    "category": "Kreatives",
+    "notes": ""
+  },
+  {
+    "id": "lesen",
+    "meaning": "Lesen",
+    "videoUrl": "https://suche.machs-auf.at/sign/65211",
+    "category": "Kreatives",
+    "notes": ""
+  },
+  {
+    "id": "malen",
+    "meaning": "Malen",
+    "videoUrl": "https://suche.machs-auf.at/sign/35866",
+    "category": "Kreatives",
+    "notes": ""
+  },
+  {
+    "id": "zeichnen",
+    "meaning": "Zeichnen",
+    "videoUrl": "https://suche.machs-auf.at/sign/30703",
+    "category": "Kreatives",
+    "notes": ""
+  },
+  {
+    "id": "basteln",
+    "meaning": "Basteln",
+    "videoUrl": "https://gebaerden-archiv.at/sign/62785",
+    "category": "Kreatives",
+    "notes": ""
+  },
+  {
+    "id": "fotografie",
+    "meaning": "Fotografie",
+    "videoUrl": "https://suche.machs-auf.at/sign/62415",
+    "category": "Kreatives",
+    "notes": ""
+  },
+  {
+    "id": "schauspiel",
+    "meaning": "Schauspiel",
+    "videoUrl": "https://suche.machs-auf.at/sign/24775",
+    "category": "Kreatives",
+    "notes": ""
+  },
+  {
+    "id": "schminken",
+    "meaning": "Schminken",
+    "videoUrl": "https://suche.machs-auf.at/sign/28351",
+    "category": "Kreatives",
+    "notes": ""
+  },
+  {
+    "id": "stricken",
+    "meaning": "Stricken",
+    "videoUrl": "https://suche.machs-auf.at/sign/76741",
+    "category": "Handarbeit",
+    "notes": ""
+  },
+  {
+    "id": "naehen",
+    "meaning": "Nähen",
+    "videoUrl": "https://suche.machs-auf.at/sign/31519",
+    "category": "Handarbeit",
+    "notes": ""
+  },
+  {
+    "id": "haekeln",
+    "meaning": "Häkeln",
+    "videoUrl": "https://suche.machs-auf.at/sign/75297",
+    "category": "Handarbeit",
+    "notes": ""
+  },
+  {
+    "id": "gaertnern",
+    "meaning": "Gärtnern",
+    "videoUrl": "https://gebaerden-archiv.at/sign/60307",
+    "category": "Natur & Freizeit",
+    "notes": ""
+  },
+  {
+    "id": "lernen",
+    "meaning": "Lernen",
+    "videoUrl": "https://suche.machs-auf.at/sign/40665",
+    "category": "Alltag & Freizeit",
+    "notes": ""
+  },
+  {
+    "id": "raetsel-loesen",
+    "meaning": "Rätsel lösen",
+    "videoUrl": "https://gebaerden-archiv.at/sign/73171",
+    "category": "Spiele",
+    "notes": "Hinweis: besser mit S-Handform. Zusätzlicher Link für lösen: https://gebaerden-archiv.at/sign/33559"
+  },
+  {
+    "id": "party",
+    "meaning": "Party",
+    "videoUrl": "https://gebaerden-archiv.at/sign/94210",
+    "category": "Alltag & Freizeit",
+    "notes": ""
+  },
+  {
+    "id": "computerspielen",
+    "meaning": "Computer spielen",
+    "videoUrl": "https://gebaerden-archiv.at/sign/21121",
+    "category": "Spiele",
+    "notes": "Zusätzlicher Link für spielen: https://gebaerden-archiv.at/sign/62580"
+  },
+  {
+    "id": "kartenspielen",
+    "meaning": "Karten spielen",
+    "videoUrl": "https://gebaerden-archiv.at/sign/41908",
+    "category": "Spiele",
+    "notes": ""
+  },
+  {
+    "id": "brettspiel",
+    "meaning": "Brettspiel",
+    "videoUrl": "https://gebaerden-archiv.at/sign/32153",
+    "category": "Spiele",
+    "notes": ""
+  },
+  {
+    "id": "reisen",
+    "meaning": "Reisen",
+    "videoUrl": "https://gebaerden-archiv.at/sign/27633",
+    "category": "Alltag & Freizeit",
+    "notes": ""
+  },
+  {
+    "id": "schlafen",
+    "meaning": "Schlafen",
+    "videoUrl": "https://gebaerden-archiv.at/sign/30693",
+    "category": "Alltag & Freizeit",
+    "notes": ""
+  },
+  {
+    "id": "moegen",
+    "meaning": "Mögen",
+    "videoUrl": "https://suche.machs-auf.at/sign/63334",
+    "category": "Modalverben",
+    "notes": ""
+  },
+  {
+    "id": "mag-nicht",
+    "meaning": "Mag nicht",
+    "videoUrl": "https://suche.machs-auf.at/sign/61905",
+    "category": "Modalverben",
+    "notes": ""
+  },
+  {
+    "id": "wirklich-nicht-moegen",
+    "meaning": "Wirklich nicht mögen",
+    "videoUrl": "https://suche.machs-auf.at/sign/25354",
+    "category": "Modalverben",
+    "notes": ""
+  },
+  {
+    "id": "ueber-alles-lieben",
+    "meaning": "Über alles lieben",
+    "videoUrl": "",
+    "category": "Modalverben",
+    "notes": "Kuss auf eigenem Faustrücken. Video-Link noch ergänzen."
+  },
+  {
+    "id": "wollen",
+    "meaning": "Wollen",
+    "videoUrl": "https://suche.machs-auf.at/sign/21702",
+    "category": "Modalverben",
+    "notes": ""
+  },
+  {
+    "id": "koennen",
+    "meaning": "Können",
+    "videoUrl": "https://suche.machs-auf.at/sign/30244",
+    "category": "Modalverben",
+    "notes": ""
+  },
+  {
+    "id": "kann-nicht",
+    "meaning": "Kann nicht",
+    "videoUrl": "https://suche.machs-auf.at/sign/45462",
+    "category": "Modalverben",
+    "notes": ""
+  },
+  {
+    "id": "duerfen",
+    "meaning": "Dürfen",
+    "videoUrl": "https://suche.machs-auf.at/sign/60190",
+    "category": "Modalverben",
+    "notes": ""
+  },
+  {
+    "id": "darf-nicht",
+    "meaning": "Darf nicht",
+    "videoUrl": "https://suche.machs-auf.at/sign/85335",
+    "category": "Modalverben",
+    "notes": ""
+  },
+  {
+    "id": "sollen",
+    "meaning": "Sollen",
+    "videoUrl": "https://suche.machs-auf.at/sign/46727",
+    "category": "Modalverben",
+    "notes": ""
+  },
+  {
+    "id": "soll-nicht",
+    "meaning": "Soll nicht",
+    "videoUrl": "https://suche.machs-auf.at/sign/70738",
+    "category": "Modalverben",
+    "notes": ""
+  },
+  {
+    "id": "muessen",
+    "meaning": "Müssen",
+    "videoUrl": "https://suche.machs-auf.at/sign/63411",
+    "category": "Modalverben",
+    "notes": ""
+  },
+  {
+    "id": "muss-nicht",
+    "meaning": "Muss nicht",
+    "videoUrl": "https://suche.machs-auf.at/sign/70738",
+    "category": "Modalverben",
+    "notes": ""
+  },
+  {
+    "id": "keine-lust-haben",
+    "meaning": "Keine Lust haben",
+    "videoUrl": "https://suche.machs-auf.at/sign/37014",
+    "category": "Modalverben",
+    "notes": ""
+  },
+  {
+    "id": "egal",
+    "meaning": "Egal",
+    "videoUrl": "https://suche.machs-auf.at/sign/66081",
+    "category": "Modalverben",
+    "notes": ""
+  },
+  {
+    "id": "hass",
+    "meaning": "Hass",
+    "videoUrl": "https://gebaerden-archiv.at/sign/22484",
+    "category": "Gefühle",
+    "notes": ""
+  },
+  {
+    "id": "verstehen",
+    "meaning": "Verstehen",
+    "videoUrl": "https://suche.machs-auf.at/sign/85539",
+    "category": "Gefühle",
+    "notes": ""
+  },
+  {
+    "id": "verstehen-nicht",
+    "meaning": "Verstehen nicht",
+    "videoUrl": "https://suche.machs-auf.at/sign/85540",
+    "category": "Gefühle",
+    "notes": ""
+  },
+  {
+    "id": "entschuldigung",
+    "meaning": "Entschuldigung",
+    "videoUrl": "https://gebaerden-archiv.at/sign/60234",
+    "category": "Kommunikation-Basics",
+    "notes": ""
+  },
+  {
+    "id": "ich-auch",
+    "meaning": "Ich auch",
+    "videoUrl": "https://suche.machs-auf.at/sign/40658",
+    "category": "Kommunikation-Basics",
+    "notes": ""
+  }
 ]
+
+  
+

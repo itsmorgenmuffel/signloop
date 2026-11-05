@@ -29,8 +29,14 @@ const el = (tag, attrs = {}, ...kids) => {
 };
 
 const VIEWS = [
-  'home', 'select', 'learn', 'done',
-  'aSelect', 'aLearn', 'aDone'
+  'home',
+  'categorySelect',
+  'select',
+  'learn',
+  'done',
+  'aSelect',
+  'aLearn',
+  'aDone'
 ];
 
 const showView = n => {
@@ -967,17 +973,33 @@ function aFinish() {
 
 function bindAlpha() {
   $('goVocab').onclick = () => {
-    renderList();
-    showView('select');
-  };
+  showView('categorySelect');
+};
 
   $('goAlpha').onclick = () => {
     aRefresh();
     showView('aSelect');
   };
 
-  $('toHome').onclick = () => showView('home');
-  $('aHome').onclick = () => showView('home');
+$('toHome').onclick = () => showView('categorySelect');
+$('toHome').onclick = () => showView('categorySelect');
+    // Navigation der Kategorieauswahl.
+  $('categoryHome').onclick = () => {
+    showView('home');
+  };
+
+  document.querySelectorAll('.category-card').forEach(button => {
+    button.addEventListener('click', () => {
+      activeCategory = button.dataset.category;
+
+      query = '';
+      $('search').value = '';
+      $('selMsg').textContent = '';
+
+      renderList();
+      showView('select');
+    });
+  });
 
   $('aAll').onclick = () => {
     aAvail().forEach(k => aSel.add(k));
@@ -1124,10 +1146,9 @@ function bind() {
   $('repeat').onclick = () => startSession(S.rem);
   $('again').onclick = () => startSession(selectedIds());
 
-  $('back').onclick = () => {
-    renderList();
-    showView('select');
-  };
+$('back').onclick = () => {
+  showView('categorySelect');
+};
 
   $('reset').onclick = () => askReset('vocab');
 
@@ -1251,9 +1272,8 @@ async function init() {
     state.selection.filter(id => byId.has(id))
   );
 
-  buildLetters();
-  buildCategories();
-  renderList();
+ buildLetters();
+renderList();
 
   aSel = new Set(
     state.alpha.selection

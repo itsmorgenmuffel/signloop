@@ -1,262 +1,864 @@
+
 'use strict';
+
 /* ÖGS-Vokabeltrainer – Vanilla JS, keine Abhängigkeiten. */
+
 const KEY = 'oegs-trainer-v1';
-const GAP = 4;                 // "Noch üben": Karte kommt nach ~4 anderen Karten wieder
+const GAP = 4;
 const DAY = 864e5;
 const LEVELS = ['Neu', 'In Übung', 'Gelernt', 'Gefestigt'];
+
 const $ = id => document.getElementById(id);
-// Sicherer DOM-Helfer: Text wird immer per textContent gesetzt, nie per innerHTML.
+
+// Sicherer DOM-Helfer: Text wird immer per textContent gesetzt.
 const el = (tag, attrs = {}, ...kids) => {
   const e = document.createElement(tag);
+
   for (const [k, v] of Object.entries(attrs)) {
-    if (k === 'text') e.textContent = v;
-    else if (k.startsWith('on')) e.addEventListener(k.slice(2), v);
-    else e.setAttribute(k, v);
+    if (k === 'text') {
+      e.textContent = v;
+    } else if (k.startsWith('on')) {
+      e.addEventListener(k.slice(2), v);
+    } else {
+      e.setAttribute(k, v);
+    }
   }
+
   e.append(...kids);
   return e;
 };
-const VIEWS = ['home', 'select', 'learn', 'done', 'aSelect', 'aLearn', 'aDone'];
-const showView = n => VIEWS.forEach(s => { $(s).hidden = s !== n; });
 
-let vocab = [], byId = new Map(), sel = new Set(), query = '', S = null;
+const VIEWS = [
+  'home', 'select', 'learn', 'done',
+  'aSelect', 'aLearn', 'aDone'
+];
+
+const showView = n => {
+  VIEWS.forEach(s => {
+    $(s).hidden = s !== n;
+  });
+};
+
+/* ---------- Globale Daten ---------- */
+
+let vocab = [];
+let byId = new Map();
+let sel = new Set();
+let query = '';
+let S = null;
+
+let activeCategory = 'Alle';
+
+const MAIN_CATEGORIES = [
+  'Alle',
+  'Hobbies',
+  'Modalverben',
+  'Gefühle',
+  'Kommunikation',
+  'Alltag'
+];
+
 const notes = [];
+
 function notice(msg) {
   notes.push(msg);
-  $('notice').replaceChildren(...notes.map(m => el('p', { text: m })));
+  $('notice').replaceChildren(
+    ...notes.map(m => el('p', { text: m }))
+  );
   $('notice').hidden = false;
 }
 
-/* ---------- Persistenz (localStorage, mit Validierung) ---------- */
+/* ---------- Kategorien ---------- */
+
+// Vereinheitlicht alte und neue Kategorien aus vocabulary.json.
+function normalizeCategory(category) {
+  const c = (category || '')
+    .trim()
+    .toLocaleLowerCase('de');
+
+  if (c === 'modalverben') {
+    return 'Modalverben';
+  }
+
+  if (['gefühle', 'gefuehle'].includes(c)) {
+    return 'Gefühle';
+  }
+
+  if ([
+    'kommunikation',
+    'kommunikation-basics',
+    'kommunikation/basisgebärden',
+    'kommunikation/basisgebaerden',
+    'vorstellung',
+    'frage + wörter',
+    'frage + woerter'
+  ].includes(c)) {
+    return 'Kommunikation';
+  }
+
+  if ([
+    'hobbies',
+    'hobby',
+    'sport',
+    'musik',
+    'kochen & backen',
+    'kochen',
+    'backen',
+    'kreatives',
+    'handarbeit',
+    'natur & freizeit',
+    'spiele'
+  ].includes(c)) {
+    return 'Hobbies';
+  }
+
+  if ([
+    'alltag',
+    'alltag & freizeit'
+  ].includes(c)) {
+    return 'Alltag';
+  }
+
+  // Unbekannte oder noch nicht zugewiesene Kategorien
+  // bleiben sichtbar und werden vorläufig Alltag zugeordnet.
+  return 'Alltag';
+}
+
+function buildCategories() {
+  const box = $('categories');
+
+  if (!box) return;
+
+  box.replaceChildren();
+
+  for (const category of MAIN_CATEGORIES) {
+    const count = category === 'Alle'
+      ? vocab.length
+      : vocab.filter(v => v.category === category).length;
+
+    const button = el('button', {
+      type: 'button',
+      class: 'category',
+      'aria-pressed': String(activeCategory === category),
+      text: `${category} (${count})`,
+      onclick: () => {
+        activeCategory = category;
+        buildCategories();
+        renderList();
+      }
+    });
+
+    box.append(button);
+  }
+}
+
+/* ---------- Persistenz ---------- */
+
 const cleanProgress = o => {
   const p = {};
-  for (const [k, v] of Object.entries(o || {}))
-    if (v && Number.isInteger(v.level) && v.level >= 0 && v.level <= 3) p[k] = { level: v.level, last: +v.last || 0 };
+
+  for (const [k, v] of Object.entries(o || {})) {
+    if (
+      v &&
+      Number.isInteger(v.level) &&
+      v.level >= 0 &&
+      v.level <= 3
+    ) {
+      p[k] = {
+        level: v.level,
+        last: +v.last || 0
+      };
+    }
+  }
+
   return p;
 };
+
 function load() {
-  const d = { progress: {}, stats: { rounds: 0 }, selection: [], prefs: { controls: false }, alpha: { progress: {}, selection: [] } };
+  const d = {
+    progress: {},
+    stats: { rounds: 0 },
+    selection: [],
+    prefs: { controls: false },
+    alpha: { progress: {}, selection: [] }
+  };
+
   let raw = null;
-  try { raw = localStorage.getItem(KEY); } catch (e) { notice('Lokaler Speicher ist nicht verfügbar – Fortschritt wird nicht gespeichert.'); }
+
+  try {
+    raw = localStorage.getItem(KEY);
+  } catch (e) {
+    notice(
+      'Lokaler Speicher ist nicht verfügbar, Fortschritt wird nicht gespeichert.'
+    );
+  }
+
   if (raw === null) return d;
+
   try {
     const r = JSON.parse(raw);
-    if (!r || typeof r !== 'object' || Array.isArray(r)) throw new Error('format');
-    const ra = r.alpha && typeof r.alpha === 'object' ? r.alpha : {};
+
+    if (
+      !r ||
+      typeof r !== 'object' ||
+      Array.isArray(r)
+    ) {
+      throw new Error('format');
+    }
+
+    const ra = r.alpha && typeof r.alpha === 'object'
+      ? r.alpha
+      : {};
+
     return {
       progress: cleanProgress(r.progress),
-      alpha: { progress: cleanProgress(ra.progress), selection: Array.isArray(ra.selection) ? ra.selection.filter(x => typeof x === 'string') : [] },
-      stats: { rounds: +(r.stats && r.stats.rounds) || 0 },
-      selection: Array.isArray(r.selection) ? r.selection.filter(x => typeof x === 'string') : [],
-      prefs: { controls: !!(r.prefs && r.prefs.controls) }
+
+      alpha: {
+        progress: cleanProgress(ra.progress),
+        selection: Array.isArray(ra.selection)
+          ? ra.selection.filter(x => typeof x === 'string')
+          : []
+      },
+
+      stats: {
+        rounds: +(r.stats && r.stats.rounds) || 0
+      },
+
+      selection: Array.isArray(r.selection)
+        ? r.selection.filter(x => typeof x === 'string')
+        : [],
+
+      prefs: {
+        controls: !!(r.prefs && r.prefs.controls)
+      }
     };
   } catch (e) {
-    notice('Gespeicherte Daten waren beschädigt und wurden zurückgesetzt.');
+    notice(
+      'Gespeicherte Daten waren beschädigt und wurden zurückgesetzt.'
+    );
     return d;
   }
 }
+
 const state = load();
+
 function save() {
-  try { localStorage.setItem(KEY, JSON.stringify(state)); }
-  catch (e) { notice('Fortschritt konnte nicht gespeichert werden (Speicher gesperrt oder voll).'); }
+  try {
+    localStorage.setItem(KEY, JSON.stringify(state));
+  } catch (e) {
+    notice(
+      'Fortschritt konnte nicht gespeichert werden (Speicher gesperrt oder voll).'
+    );
+  }
 }
 
-/* ---------- Lernstatus ----------
-   0 Neu → 1 In Übung → 2 Gelernt → 3 Gefestigt.
-   "Gelernt" setzt ein Wort höchstens auf "Gelernt" (2). "Gefestigt" (3) gibt es erst,
-   wenn es später (mehr als 24 h danach) erneut als gelernt markiert wird.
-   "Noch üben" setzt das Wort zurück auf "In Übung" (1). */
-const lvl = (id, st = state.progress) => (st[id] || { level: 0 }).level;
+/* ---------- Lernstatus ---------- */
+
+const lvl = (id, st = state.progress) => {
+  return (st[id] || { level: 0 }).level;
+};
+
 function markLearned(id, st = state.progress) {
-  const p = st[id] || { level: 0, last: 0 }, now = Date.now();
-  if (p.level < 2) p.level = 2;
-  else if (p.level === 2 && now - p.last > DAY) p.level = 3;
-  p.last = now; st[id] = p; save();
+  const p = st[id] || { level: 0, last: 0 };
+  const now = Date.now();
+
+  if (p.level < 2) {
+    p.level = 2;
+  } else if (p.level === 2 && now - p.last > DAY) {
+    p.level = 3;
+  }
+
+  p.last = now;
+  st[id] = p;
+  save();
 }
-function markPractice(id, st = state.progress) { st[id] = { level: 1, last: Date.now() }; save(); }
+
+function markPractice(id, st = state.progress) {
+  st[id] = {
+    level: 1,
+    last: Date.now()
+  };
+
+  save();
+}
 
 /* ---------- Auswahl ---------- */
+
 const letterOf = m => {
-  const c = m.trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').charAt(0).toUpperCase();
+  const c = m
+    .trim()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .charAt(0)
+    .toUpperCase();
+
   return /[A-Z]/.test(c) ? c : '#';
 };
-const persistSel = () => { state.selection = [...sel]; save(); };
+
+const persistSel = () => {
+  state.selection = [...sel];
+  save();
+};
 
 function buildLetters() {
-  const box = $('letters'); box.replaceChildren();
+  const box = $('letters');
+  box.replaceChildren();
+
   for (const L of 'ABCDEFGHIJKLMNOPQRSTUVWXYZ#') {
     const items = vocab.filter(v => v.letter === L);
+
     if (L === '#' && !items.length) continue;
+
     const attrs = {
-      type: 'button', class: 'letter', 'data-letter': L, 'aria-pressed': 'false', text: L,
+      type: 'button',
+      class: 'letter',
+      'data-letter': L,
+      'aria-pressed': 'false',
+      text: L,
+
       'aria-label': `Buchstabe ${L}, ${items.length} Vokabeln`,
+
       onclick: () => {
         const all = items.every(v => sel.has(v.id));
-        items.forEach(v => all ? sel.delete(v.id) : sel.add(v.id));
-        persistSel(); refresh();
+
+        items.forEach(v => {
+          if (all) {
+            sel.delete(v.id);
+          } else {
+            sel.add(v.id);
+          }
+        });
+
+        persistSel();
+        refresh();
       }
     };
-    if (!items.length) attrs.disabled = '';
+
+    if (!items.length) {
+      attrs.disabled = '';
+    }
+
     box.append(el('button', attrs));
   }
 }
-const hits = () => vocab.filter(v => v.meaning.toLowerCase().includes(query));
+
+// Suche und Kategorienfilter werden miteinander kombiniert.
+const hits = () => {
+  return vocab.filter(v => {
+    const matchesSearch = v.meaning
+      .toLocaleLowerCase('de')
+      .includes(query);
+
+    const matchesCategory =
+      activeCategory === 'Alle' ||
+      v.category === activeCategory;
+
+    return matchesSearch && matchesCategory;
+  });
+};
+
 function renderList() {
-  const ul = $('list'); ul.replaceChildren();
+  const ul = $('list');
+  ul.replaceChildren();
+
   const h = hits();
-  if (!h.length) ul.append(el('li', { class: 'empty', text: vocab.length ? 'Keine Treffer.' : 'Keine Vokabeln vorhanden.' }));
-  for (const v of h) {
-    ul.append(el('li', {}, el('label', { class: 'item' },
-      el('input', { type: 'checkbox', value: v.id, onchange: e => { e.target.checked ? sel.add(v.id) : sel.delete(v.id); persistSel(); refresh(); } }),
-      el('span', { class: 'm', text: v.meaning }),
-      el('span', { class: 'c', text: v.category || '' }),
-      el('span', { class: 'b', text: LEVELS[lvl(v.id)] }))));
+
+  if (!h.length) {
+    ul.append(
+      el('li', {
+        class: 'empty',
+        text: vocab.length
+          ? 'Keine Treffer.'
+          : 'Keine Vokabeln vorhanden.'
+      })
+    );
   }
-  $('selHits').hidden = !query;
+
+  for (const v of h) {
+    ul.append(
+      el(
+        'li',
+        {},
+        el(
+          'label',
+          { class: 'item' },
+
+          el('input', {
+            type: 'checkbox',
+            value: v.id,
+
+            onchange: e => {
+              if (e.target.checked) {
+                sel.add(v.id);
+              } else {
+                sel.delete(v.id);
+              }
+
+              persistSel();
+              refresh();
+            }
+          }),
+
+          el('span', {
+            class: 'm',
+            text: v.meaning
+          }),
+
+          el('span', {
+            class: 'c',
+            text: v.category || ''
+          }),
+
+          el('span', {
+            class: 'b',
+            text: LEVELS[lvl(v.id)]
+          })
+        )
+      )
+    );
+  }
+
+  // Treffer auswählen wird auch bei aktivem Kategorienfilter angezeigt.
+  $('selHits').hidden = !query && activeCategory === 'Alle';
+
   refresh();
 }
+
 function refresh() {
   document.querySelectorAll('#letters button').forEach(b => {
-    const items = vocab.filter(v => v.letter === b.dataset.letter);
-    b.setAttribute('aria-pressed', String(items.length > 0 && items.every(v => sel.has(v.id))));
+    const items = vocab.filter(
+      v => v.letter === b.dataset.letter
+    );
+
+    b.setAttribute(
+      'aria-pressed',
+      String(
+        items.length > 0 &&
+        items.every(v => sel.has(v.id))
+      )
+    );
   });
-  document.querySelectorAll('#list input').forEach(i => { i.checked = sel.has(i.value); });
-  $('count').textContent = `${vocab.length} Vokabeln verfügbar · ${sel.size} ausgewählt`;
-  const c = [0, 0, 0, 0]; vocab.forEach(v => c[lvl(v.id)]++);
-  $('stats').textContent = LEVELS.map((n, i) => `${n}: ${c[i]}`).join(' · ') + ` · Gestartete Runden: ${state.stats.rounds}`;
+
+  document.querySelectorAll('#list input').forEach(i => {
+    i.checked = sel.has(i.value);
+  });
+
+  $('count').textContent =
+    `${vocab.length} Vokabeln verfügbar · ${sel.size} ausgewählt`;
+
+  const c = [0, 0, 0, 0];
+
+  vocab.forEach(v => {
+    c[lvl(v.id)]++;
+  });
+
+  $('stats').textContent =
+    LEVELS.map((n, i) => `${n}: ${c[i]}`).join(' · ') +
+    ` · Gestartete Runden: ${state.stats.rounds}`;
 }
 
-/* ---------- Lernsitzung / Warteschlange ----------
-   S.queue   = IDs, vorne = aktuelle Karte
-   S.learned = in dieser Runde als gelernt markiert
-   S.practice= in dieser Runde mit "Noch üben" markiert (und noch nicht gelernt) */
+/* ---------- Lernsitzung / Warteschlange ---------- */
+
 function shuffle(a) {
   a = a.slice();
-  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+
   return a;
 }
+
 function startSession(ids) {
   if (!ids.length) return;
-  state.stats.rounds++; save();
-  S = { queue: shuffle(ids), learned: new Set(), practice: new Set(), total: ids.length };
-  showView('learn'); showCard();
+
+  state.stats.rounds++;
+  save();
+
+  S = {
+    queue: shuffle(ids),
+    learned: new Set(),
+    practice: new Set(),
+    total: ids.length
+  };
+
+  showView('learn');
+  showCard();
 }
+
 function showCard() {
   const it = byId.get(S.queue[0]);
-  $('progress').max = S.total; $('progress').value = S.learned.size;
-  $('progText').textContent = `Noch ${S.queue.length} von ${S.total} Karten · gelernt: ${S.learned.size}`;
-  $('meaning').hidden = true; $('notes').hidden = true;
-  $('meaning').textContent = it.meaning; $('notes').textContent = it.notes || '';
+
+  $('progress').max = S.total;
+  $('progress').value = S.learned.size;
+
+  $('progText').textContent =
+    `Noch ${S.queue.length} von ${S.total} Karten · gelernt: ${S.learned.size}`;
+
+  $('meaning').hidden = true;
+  $('notes').hidden = true;
+
+  $('meaning').textContent = it.meaning;
+  $('notes').textContent = it.notes || '';
+
   $('reveal').disabled = false;
+
   loadVideo(it);
 }
+
 function answer(kind) {
   if (!S || !S.queue.length) return;
+
   if (kind === 'skip') {
-    if (S.queue.length < 2) { $('vmsg').replaceChildren(el('p', { text: 'Das ist die letzte Karte – bitte „Gelernt“ oder „Noch üben“ wählen.' })); return; }
-    S.queue.push(S.queue.shift());                 // ans Ende, nicht als gelernt markiert
+    if (S.queue.length < 2) {
+      $('vmsg').replaceChildren(
+        el('p', {
+          text: 'Das ist die letzte Karte, bitte „Gelernt“ oder „Noch üben“ wählen.'
+        })
+      );
+      return;
+    }
+
+    S.queue.push(S.queue.shift());
   } else {
     const id = S.queue.shift();
-    if (kind === 'learned') { S.learned.add(id); S.practice.delete(id); markLearned(id); }
-    else {
-      S.practice.add(id); markPractice(id);
-      if (!S.queue.length) { finish(); return; }   // einzige Restkarte: keine Endlosschleife
-      S.queue.splice(Math.min(GAP, S.queue.length), 0, id); // erst nach einigen anderen Karten
+
+    if (kind === 'learned') {
+      S.learned.add(id);
+      S.practice.delete(id);
+      markLearned(id);
+    } else {
+      S.practice.add(id);
+      markPractice(id);
+
+      if (!S.queue.length) {
+        finish();
+        return;
+      }
+
+      S.queue.splice(
+        Math.min(GAP, S.queue.length),
+        0,
+        id
+      );
     }
   }
+
   S.queue.length ? showCard() : finish();
 }
+
 function finish() {
   stopVideo();
-  S.rem = [...new Set([...S.queue, ...S.practice])].filter(id => !S.learned.has(id));
-  $('dLearned').textContent = S.learned.size; $('dRem').textContent = S.rem.length;
+
+  S.rem = [
+    ...new Set([...S.queue, ...S.practice])
+  ].filter(id => !S.learned.has(id));
+
+  $('dLearned').textContent = S.learned.size;
+  $('dRem').textContent = S.rem.length;
   $('repeat').disabled = !S.rem.length;
-  showView('done'); $('doneH').focus();
+
+  showView('done');
+  $('doneH').focus();
 }
-const selectedIds = () => vocab.filter(v => sel.has(v.id)).map(v => v.id);
+
+const selectedIds = () => {
+  return vocab
+    .filter(v => sel.has(v.id))
+    .map(v => v.id);
+};
 
 /* ---------- Video ---------- */
+
 function mediaFor(url) {
-  let u; try { u = new URL(url); } catch (e) { return null; }
+  let u;
+
+  try {
+    u = new URL(url);
+  } catch (e) {
+    return null;
+  }
+
   if (!/^https?:$/.test(u.protocol)) return null;
-  const h = u.hostname.replace(/^www\./, ''), p = u.pathname; let m, id = null;
-  if (/\.(mp4|webm|m4v|ogv)$/i.test(p)) return { type: 'file', src: u.href };
-  if (h === 'youtu.be') id = p.slice(1);
-  else if (h.endsWith('youtube.com')) id = u.searchParams.get('v') || ((m = p.match(/^\/(?:embed|shorts)\/([\w-]+)/)) && m[1]);
-  if (id && /^[\w-]{6,}$/.test(id))
-    return { type: 'iframe', src: `https://www.youtube-nocookie.com/embed/${id}?rel=0&mute=1&autoplay=1&loop=1&playlist=${id}` };
-  if (h === 'vimeo.com' && (m = p.match(/^\/(\d+)/)))
-    return { type: 'iframe', src: `https://player.vimeo.com/video/${m[1]}?muted=1&autoplay=1&loop=1` };
-  return { type: 'iframe', src: u.href };   // unbekannter Anbieter: Einbettung versuchen
+
+  const h = u.hostname.replace(/^www\./, '');
+  const p = u.pathname;
+
+  let m;
+  let id = null;
+
+  if (/\.(mp4|webm|m4v|ogv)$/i.test(p)) {
+    return {
+      type: 'file',
+      src: u.href
+    };
+  }
+
+  if (h === 'youtu.be') {
+    id = p.slice(1);
+  } else if (h.endsWith('youtube.com')) {
+    id = u.searchParams.get('v') ||
+      ((m = p.match(/^\/(?:embed|shorts)\/([\w-]+)/)) && m[1]);
+  }
+
+  if (id && /^[\w-]{6,}$/.test(id)) {
+    return {
+      type: 'iframe',
+      src: `https://www.youtube-nocookie.com/embed/${id}?rel=0&mute=1&autoplay=1&loop=1&playlist=${id}`
+    };
+  }
+
+  if (h === 'vimeo.com' && (m = p.match(/^\/(\d+)/))) {
+    return {
+      type: 'iframe',
+      src: `https://player.vimeo.com/video/${m[1]}?muted=1&autoplay=1&loop=1`
+    };
+  }
+
+  // Unbekannter Anbieter: Einbettung versuchen.
+  return {
+    type: 'iframe',
+    src: u.href
+  };
 }
+
 function stopVideo(m = $('media'), g = $('vmsg')) {
-  m.querySelectorAll('video').forEach(v => { v.pause(); v.removeAttribute('src'); v.load(); });
-  m.replaceChildren(); g.replaceChildren();
+  m.querySelectorAll('video').forEach(v => {
+    v.pause();
+    v.removeAttribute('src');
+    v.load();
+  });
+
+  m.replaceChildren();
+  g.replaceChildren();
 }
-const openLink = url => el('p', {}, el('a', { href: url, target: '_blank', rel: 'noopener noreferrer', text: 'Original-Video in neuem Tab öffnen' }));
-// media/msg: Zielcontainer – Vokabeln und Fingeralphabet haben je eigene Elemente.
+
+const openLink = url => {
+  return el(
+    'p',
+    {},
+    el('a', {
+      href: url,
+      target: '_blank',
+      rel: 'noopener noreferrer',
+      text: 'Original-Video in neuem Tab öffnen'
+    })
+  );
+};
+
+// Vokabeln und Fingeralphabet haben eigene Video-Elemente.
 function loadVideo(it, media = $('media'), msg = $('vmsg')) {
   stopVideo(media, msg);
+
   const m = mediaFor(it.videoUrl);
-  const fail = t => msg.replaceChildren(el('p', { text: t }), ...(m ? [openLink(it.videoUrl)] : []));
-  media.className = 'media' + (m && m.type === 'iframe' ? ' embed' : '');
-  if (!m) return fail('Ungültige Video-Adresse.');
+
+  const fail = t => {
+    msg.replaceChildren(
+      el('p', { text: t }),
+      ...(m ? [openLink(it.videoUrl)] : [])
+    );
+  };
+
+  media.className =
+    'media' + (m && m.type === 'iframe' ? ' embed' : '');
+
+  if (!m) {
+    return fail(
+      'Für diese Vokabel ist kein gültiger Video-Link hinterlegt.'
+    );
+  }
+
   if (m.type === 'file') {
-    const v = el('video', { loop: '', playsinline: '', preload: 'auto', 'aria-label': 'Gebärdenvideo' });
-    v.muted = true; v.autoplay = true; v.controls = state.prefs.controls;
-    v.addEventListener('error', () => { if (v.isConnected) fail('Das Video konnte nicht geladen werden (Adresse falsch, Datei fehlt oder Zugriff gesperrt).'); });
-    v.src = m.src; media.append(v);
+    const v = el('video', {
+      loop: '',
+      playsinline: '',
+      preload: 'auto',
+      'aria-label': 'Gebärdenvideo'
+    });
+
+    v.muted = true;
+    v.autoplay = true;
+    v.controls = state.prefs.controls;
+
+    v.addEventListener('error', () => {
+      if (v.isConnected) {
+        fail(
+          'Das Video konnte nicht geladen werden (Adresse falsch, Datei fehlt oder Zugriff gesperrt).'
+        );
+      }
+    });
+
+    v.src = m.src;
+    media.append(v);
+
     const p = v.play();
-    if (p && p.catch) p.catch(() => { if (v.isConnected && !v.error) msg.replaceChildren(el('p', { text: 'Autoplay wurde vom Browser blockiert. Bitte „Video abspielen“ drücken.' })); });
+
+    if (p && p.catch) {
+      p.catch(() => {
+        if (v.isConnected && !v.error) {
+          msg.replaceChildren(
+            el('p', {
+              text: 'Autoplay wurde vom Browser blockiert. Bitte „Video abspielen“ drücken.'
+            })
+          );
+        }
+      });
+    }
   } else {
-    const f = el('iframe', { title: 'Gebärdenvideo', allow: 'autoplay; fullscreen; picture-in-picture', allowfullscreen: '', referrerpolicy: 'no-referrer', sandbox: 'allow-scripts allow-same-origin allow-presentation' });
-    f.src = m.src; media.append(f);
-    msg.replaceChildren(el('p', { class: 'muted', text: 'Eingebettetes Video. Wird nichts angezeigt, erlaubt der Anbieter keine Einbettung.' }), openLink(it.videoUrl));
+    const f = el('iframe', {
+      title: 'Gebärdenvideo',
+      allow: 'autoplay; fullscreen; picture-in-picture',
+      allowfullscreen: '',
+      referrerpolicy: 'no-referrer',
+      sandbox: 'allow-scripts allow-same-origin allow-presentation'
+    });
+
+    f.src = m.src;
+    media.append(f);
+
+    msg.replaceChildren(
+      el('p', {
+        class: 'muted',
+        text: 'Eingebettetes Video. Wird nichts angezeigt, erlaubt der Anbieter keine Einbettung.'
+      }),
+      openLink(it.videoUrl)
+    );
   }
 }
+
 function replay(media = $('media')) {
-  const v = media.querySelector('video'), f = media.querySelector('iframe');
-  if (v) { v.currentTime = 0; const p = v.play(); if (p && p.catch) p.catch(() => {}); }
-  else if (f) f.src = f.src;
+  const v = media.querySelector('video');
+  const f = media.querySelector('iframe');
+
+  if (v) {
+    v.currentTime = 0;
+    const p = v.play();
+
+    if (p && p.catch) {
+      p.catch(() => {});
+    }
+  } else if (f) {
+    f.src = f.src;
+  }
 }
 
-/* ---------- Fingeralphabet (eigener Bereich, eigener Fortschritt: state.alpha) ----------
-   Einträge kommen aus vocabulary.json (IDs "fingeralphabet-…"), nie aus der Vokabelliste. */
-const ALPHA_ORDER = [...'abcdefghijklmnopqrstuvwxyz', 'ae', 'oe', 'ue', 'sch'];
-const ALPHA_LABEL = { ae: 'Ä', oe: 'Ö', ue: 'Ü', sch: 'SCH' };
+/* ---------- Fingeralphabet ---------- */
+
+const ALPHA_ORDER = [
+  ...'abcdefghijklmnopqrstuvwxyz',
+  'ae',
+  'oe',
+  'ue',
+  'sch'
+];
+
+const ALPHA_LABEL = {
+  ae: 'Ä',
+  oe: 'Ö',
+  ue: 'Ü',
+  sch: 'SCH'
+};
+
 const aLabel = k => ALPHA_LABEL[k] || k.toUpperCase();
-let alphaData = new Map(), aSel = new Set(), A = null;
-const aHasVideo = k => { const e = alphaData.get(k); return !!(e && e.videoUrl && mediaFor(e.videoUrl)); };
+
+let alphaData = new Map();
+let aSel = new Set();
+let A = null;
+
+const aHasVideo = k => {
+  const e = alphaData.get(k);
+  return !!(e && e.videoUrl && mediaFor(e.videoUrl));
+};
+
 const aAvail = () => ALPHA_ORDER.filter(aHasVideo);
-const aPersist = () => { state.alpha.selection = [...aSel]; save(); };
+
+const aPersist = () => {
+  state.alpha.selection = [...aSel];
+  save();
+};
 
 function aBuild() {
-  const g = $('aGrid'); g.replaceChildren();
+  const g = $('aGrid');
+  g.replaceChildren();
+
   for (const k of ALPHA_ORDER) {
     const ok = aHasVideo(k);
+
     const attrs = {
-      type: 'button', class: 'letter', 'data-key': k, 'aria-pressed': 'false', text: aLabel(k),
-      'aria-label': aLabel(k) + (ok ? '' : ' (nicht verfügbar)'),
-      onclick: () => { aSel.has(k) ? aSel.delete(k) : aSel.add(k); aPersist(); aRefresh(); }
+      type: 'button',
+      class: 'letter',
+      'data-key': k,
+      'aria-pressed': 'false',
+      text: aLabel(k),
+
+      'aria-label': aLabel(k) +
+        (ok ? '' : ' (nicht verfügbar)'),
+
+      onclick: () => {
+        if (aSel.has(k)) {
+          aSel.delete(k);
+        } else {
+          aSel.add(k);
+        }
+
+        aPersist();
+        aRefresh();
+      }
     };
-    if (!ok) { attrs.disabled = ''; attrs.title = 'Nicht verfügbar'; }
+
+    if (!ok) {
+      attrs.disabled = '';
+      attrs.title = 'Nicht verfügbar';
+    }
+
     g.append(el('button', attrs));
   }
+
   const miss = ALPHA_ORDER.filter(k => !aHasVideo(k));
-  const noEntry = miss.filter(k => !alphaData.has(k)).map(aLabel), noUrl = miss.filter(k => alphaData.has(k)).map(aLabel);
-  const n = $('aNote'); n.replaceChildren();
-  if (noUrl.length) n.append(el('p', { text: `Nicht verfügbar (kein gültiger Video-Link in vocabulary.json): ${noUrl.join(', ')}` }));
-  if (noEntry.length) n.append(el('p', { text: `Nicht verfügbar (kein Eintrag in vocabulary.json): ${noEntry.join(', ')}` }));
+
+  const noEntry = miss
+    .filter(k => !alphaData.has(k))
+    .map(aLabel);
+
+  const noUrl = miss
+    .filter(k => alphaData.has(k))
+    .map(aLabel);
+
+  const n = $('aNote');
+  n.replaceChildren();
+
+  if (noUrl.length) {
+    n.append(
+      el('p', {
+        text: `Nicht verfügbar (kein gültiger Video-Link in vocabulary.json): ${noUrl.join(', ')}`
+      })
+    );
+  }
+
+  if (noEntry.length) {
+    n.append(
+      el('p', {
+        text: `Nicht verfügbar (kein Eintrag in vocabulary.json): ${noEntry.join(', ')}`
+      })
+    );
+  }
 }
+
 function aRefresh() {
   const available = aAvail();
   const availableSet = new Set(available);
 
-  // Nur verfügbare Buchstaben als ausgewählt zählen
-  aSel = new Set([...aSel].filter(k => availableSet.has(k)));
+  // Nur verfügbare Buchstaben als ausgewählt zählen.
+  aSel = new Set(
+    [...aSel].filter(k => availableSet.has(k))
+  );
 
   document.querySelectorAll('#aGrid button').forEach(b => {
-    b.setAttribute('aria-pressed', String(aSel.has(b.dataset.key)));
+    b.setAttribute(
+      'aria-pressed',
+      String(aSel.has(b.dataset.key))
+    );
   });
 
   const c = [0, 0, 0, 0];
@@ -271,140 +873,397 @@ function aRefresh() {
   $('aStats').textContent =
     LEVELS.map((n, i) => `${n}: ${c[i]}`).join(' · ');
 }
+
 function aStart(keys) {
   keys = keys.filter(aHasVideo);
+
   if (!keys.length) return;
-  A = { queue: shuffle(keys), learned: new Set(), practice: new Set(), total: keys.length };
-  showView('aLearn'); aShow();
+
+  A = {
+    queue: shuffle(keys),
+    learned: new Set(),
+    practice: new Set(),
+    total: keys.length
+  };
+
+  showView('aLearn');
+  aShow();
 }
+
 function aShow() {
   const k = A.queue[0];
-  $('aProgress').max = A.total; $('aProgress').value = A.learned.size;
-  $('aProgText').textContent = `Noch ${A.queue.length} von ${A.total} Buchstaben · gelernt: ${A.learned.size}`;
-  $('aLetter').textContent = aLabel(k); $('aLetter').hidden = true; $('aReveal').disabled = false;
+
+  $('aProgress').max = A.total;
+  $('aProgress').value = A.learned.size;
+
+  $('aProgText').textContent =
+    `Noch ${A.queue.length} von ${A.total} Buchstaben · gelernt: ${A.learned.size}`;
+
+  $('aLetter').textContent = aLabel(k);
+  $('aLetter').hidden = true;
+  $('aReveal').disabled = false;
+
   loadVideo(alphaData.get(k), $('aMedia'), $('aVmsg'));
 }
+
 function aAnswer(kind) {
   if (!A || !A.queue.length) return;
+
   const st = state.alpha.progress;
+
   if (kind === 'skip') {
-    if (A.queue.length < 2) { $('aVmsg').replaceChildren(el('p', { text: 'Das ist der letzte Buchstabe – bitte „Gelernt“ oder „Noch üben“ wählen.' })); return; }
+    if (A.queue.length < 2) {
+      $('aVmsg').replaceChildren(
+        el('p', {
+          text: 'Das ist der letzte Buchstabe, bitte „Gelernt“ oder „Noch üben“ wählen.'
+        })
+      );
+      return;
+    }
+
     A.queue.push(A.queue.shift());
   } else {
-    const k = A.queue.shift(), id = 'fingeralphabet-' + k;
-    if (kind === 'learned') { A.learned.add(k); A.practice.delete(k); markLearned(id, st); }
-    else {
-      A.practice.add(k); markPractice(id, st);
-      if (!A.queue.length) { aFinish(); return; }
-      A.queue.splice(Math.min(GAP, A.queue.length), 0, k);
+    const k = A.queue.shift();
+    const id = 'fingeralphabet-' + k;
+
+    if (kind === 'learned') {
+      A.learned.add(k);
+      A.practice.delete(k);
+      markLearned(id, st);
+    } else {
+      A.practice.add(k);
+      markPractice(id, st);
+
+      if (!A.queue.length) {
+        aFinish();
+        return;
+      }
+
+      A.queue.splice(
+        Math.min(GAP, A.queue.length),
+        0,
+        k
+      );
     }
   }
+
   A.queue.length ? aShow() : aFinish();
 }
+
 function aFinish() {
   stopVideo($('aMedia'), $('aVmsg'));
-  A.rem = [...new Set([...A.queue, ...A.practice])].filter(k => !A.learned.has(k));
-  $('aDLearned').textContent = A.learned.size; $('aDRem').textContent = A.rem.length;
+
+  A.rem = [
+    ...new Set([...A.queue, ...A.practice])
+  ].filter(k => !A.learned.has(k));
+
+  $('aDLearned').textContent = A.learned.size;
+  $('aDRem').textContent = A.rem.length;
   $('aRepeat').disabled = !A.rem.length;
-  showView('aDone'); $('aDoneH').focus();
+
+  showView('aDone');
+  $('aDoneH').focus();
 }
+
 function bindAlpha() {
-  $('goVocab').onclick = () => { renderList(); showView('select'); };
-  $('goAlpha').onclick = () => { aRefresh(); showView('aSelect'); };
+  $('goVocab').onclick = () => {
+    renderList();
+    showView('select');
+  };
+
+  $('goAlpha').onclick = () => {
+    aRefresh();
+    showView('aSelect');
+  };
+
   $('toHome').onclick = () => showView('home');
   $('aHome').onclick = () => showView('home');
-  $('aAll').onclick = () => { aAvail().forEach(k => aSel.add(k)); aPersist(); aRefresh(); };
-  $('aNone').onclick = () => { aSel.clear(); aPersist(); aRefresh(); };
-  $('aStart').onclick = () => {
-    if (!aSel.size) { $('aMsg').textContent = 'Bitte wähle mindestens einen Buchstaben aus.'; return; }
-    $('aMsg').textContent = ''; aStart([...aSel]);
+
+  $('aAll').onclick = () => {
+    aAvail().forEach(k => aSel.add(k));
+    aPersist();
+    aRefresh();
   };
-  $('aReveal').onclick = () => { $('aLetter').hidden = false; $('aReveal').disabled = true; };
+
+  $('aNone').onclick = () => {
+    aSel.clear();
+    aPersist();
+    aRefresh();
+  };
+
+  $('aStart').onclick = () => {
+    if (!aSel.size) {
+      $('aMsg').textContent =
+        'Bitte wähle mindestens einen Buchstaben aus.';
+      return;
+    }
+
+    $('aMsg').textContent = '';
+    aStart([...aSel]);
+  };
+
+  $('aReveal').onclick = () => {
+    $('aLetter').hidden = false;
+    $('aReveal').disabled = true;
+  };
+
   $('aPractice').onclick = () => aAnswer('practice');
   $('aLearned').onclick = () => aAnswer('learned');
   $('aSkip').onclick = () => aAnswer('skip');
   $('aReplay').onclick = () => replay($('aMedia'));
-  $('aEnd').onclick = () => { if (A) aFinish(); };
+
+  $('aEnd').onclick = () => {
+    if (A) aFinish();
+  };
+
   $('aRepeat').onclick = () => aStart(A.rem);
   $('aAgain').onclick = () => aStart([...aSel]);
-  $('aBack').onclick = () => { aRefresh(); showView('aSelect'); };
+
+  $('aBack').onclick = () => {
+    aRefresh();
+    showView('aSelect');
+  };
+
   $('aReset').onclick = () => askReset('alpha');
 }
+
+/* ---------- Fortschritt zurücksetzen ---------- */
+
 let dlgTarget = 'vocab';
+
 function askReset(t) {
   dlgTarget = t;
+
   $('dlgText').textContent = t === 'alpha'
     ? 'Alle Lernstände im Fingeralphabet werden gelöscht. Der Vokabel-Fortschritt bleibt erhalten. Das kann nicht rückgängig gemacht werden.'
     : 'Alle gespeicherten Lernstände und Statistiken der Vokabeln werden gelöscht. Der Fingeralphabet-Fortschritt bleibt erhalten. Das kann nicht rückgängig gemacht werden.';
-  if ($('dlg').showModal) $('dlg').showModal();
-  else if (confirm('Fortschritt wirklich zurücksetzen?')) doReset();
+
+  if ($('dlg').showModal) {
+    $('dlg').showModal();
+  } else if (confirm('Fortschritt wirklich zurücksetzen?')) {
+    doReset();
+  }
 }
+
 function doReset() {
-  if (dlgTarget === 'alpha') { state.alpha.progress = {}; save(); aRefresh(); }
-  else resetProgress();
+  if (dlgTarget === 'alpha') {
+    state.alpha.progress = {};
+    save();
+    aRefresh();
+  } else {
+    resetProgress();
+  }
 }
 
 /* ---------- Start ---------- */
+
 function resetProgress() {
-  state.progress = {}; state.stats.rounds = 0; save(); renderList();
+  state.progress = {};
+  state.stats.rounds = 0;
+  save();
+  renderList();
 }
+
 function bind() {
-  $('search').addEventListener('input', e => { query = e.target.value.trim().toLowerCase(); renderList(); });
-  $('selAll').onclick = () => { vocab.forEach(v => sel.add(v.id)); persistSel(); refresh(); };
-  $('selHits').onclick = () => { hits().forEach(v => sel.add(v.id)); persistSel(); refresh(); };
-  $('selNone').onclick = () => { sel.clear(); persistSel(); refresh(); };
-  $('ctrl').checked = state.prefs.controls;
-  $('ctrl').onchange = e => { state.prefs.controls = e.target.checked; save(); };
-  $('start').onclick = () => {
-    if (!sel.size) { $('selMsg').textContent = 'Bitte wähle mindestens eine Vokabel aus.'; return; }
-    $('selMsg').textContent = ''; startSession(selectedIds());
+  $('search').addEventListener('input', e => {
+    query = e.target.value.trim().toLowerCase();
+    renderList();
+  });
+
+  $('selAll').onclick = () => {
+    vocab.forEach(v => sel.add(v.id));
+    persistSel();
+    refresh();
   };
-  $('reveal').onclick = () => { $('meaning').hidden = false; $('notes').hidden = !S || !byId.get(S.queue[0]).notes; $('reveal').disabled = true; };
+
+  $('selHits').onclick = () => {
+    hits().forEach(v => sel.add(v.id));
+    persistSel();
+    refresh();
+  };
+
+  $('selNone').onclick = () => {
+    sel.clear();
+    persistSel();
+    refresh();
+  };
+
+  $('ctrl').checked = state.prefs.controls;
+
+  $('ctrl').onchange = e => {
+    state.prefs.controls = e.target.checked;
+    save();
+  };
+
+  $('start').onclick = () => {
+    if (!sel.size) {
+      $('selMsg').textContent =
+        'Bitte wähle mindestens eine Vokabel aus.';
+      return;
+    }
+
+    $('selMsg').textContent = '';
+    startSession(selectedIds());
+  };
+
+  $('reveal').onclick = () => {
+    $('meaning').hidden = false;
+    $('notes').hidden = !S || !byId.get(S.queue[0]).notes;
+    $('reveal').disabled = true;
+  };
+
   $('practice').onclick = () => answer('practice');
   $('learned').onclick = () => answer('learned');
   $('skip').onclick = () => answer('skip');
   $('replay').onclick = () => replay();
-  $('end').onclick = () => { if (S) finish(); };
+
+  $('end').onclick = () => {
+    if (S) finish();
+  };
+
   $('repeat').onclick = () => startSession(S.rem);
   $('again').onclick = () => startSession(selectedIds());
-  $('back').onclick = () => { renderList(); showView('select'); };
+
+  $('back').onclick = () => {
+    renderList();
+    showView('select');
+  };
+
   $('reset').onclick = () => askReset('vocab');
+
   $('dlgNo').onclick = () => $('dlg').close();
-  $('dlgYes').onclick = () => { $('dlg').close(); doReset(); };
+
+  $('dlgYes').onclick = () => {
+    $('dlg').close();
+    doReset();
+  };
+
   bindAlpha();
 }
+
 async function init() {
   bind();
+
   let data;
+
   try {
-    const r = await fetch('vocabulary.json', { cache: 'no-cache' });
-    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const r = await fetch('vocabulary.json', {
+      cache: 'no-cache'
+    });
+
+    if (!r.ok) {
+      throw new Error('HTTP ' + r.status);
+    }
+
     data = await r.json();
   } catch (e) {
-    notice('vocabulary.json konnte nicht geladen werden.' + (location.protocol === 'file:' ? ' Bitte die Seite über einen lokalen Webserver öffnen (siehe README).' : ' Prüfe Dateiname und JSON-Syntax.'));
+    notice(
+      'vocabulary.json konnte nicht geladen werden.' +
+      (
+        location.protocol === 'file:'
+          ? ' Bitte die Seite über einen lokalen Webserver öffnen (siehe README).'
+          : ' Prüfe Dateiname und JSON-Syntax.'
+      )
+    );
+
     data = [];
   }
-  if (!Array.isArray(data)) { notice('vocabulary.json muss eine Liste (Array) sein.'); data = []; }
-  const seen = new Set(); let bad = 0;
+
+  if (!Array.isArray(data)) {
+    notice('vocabulary.json muss eine Liste (Array) sein.');
+    data = [];
+  }
+
+  const seen = new Set();
+  let bad = 0;
+
   for (const v of data) {
-    // Fingeralphabet-Einträge gehören nicht zur Vokabelliste, sondern in den eigenen Bereich.
-    if (v && typeof v.id === 'string' && v.id.startsWith('fingeralphabet-')) {
+    // Fingeralphabet-Einträge gehören in den eigenen Bereich.
+    if (
+      v &&
+      typeof v.id === 'string' &&
+      v.id.startsWith('fingeralphabet-')
+    ) {
       const k = v.id.slice(15);
-      if (!alphaData.has(k)) alphaData.set(k, { id: v.id, videoUrl: typeof v.videoUrl === 'string' ? v.videoUrl.trim() : '' });
+
+      if (!alphaData.has(k)) {
+        alphaData.set(k, {
+          id: v.id,
+          videoUrl: typeof v.videoUrl === 'string'
+            ? v.videoUrl.trim()
+            : ''
+        });
+      }
+
       continue;
     }
-    const ok = v && typeof v.id === 'string' && v.id && typeof v.meaning === 'string' && v.meaning.trim() && typeof v.videoUrl === 'string' && !seen.has(v.id);
-    if (!ok) { bad++; continue; }
+
+    const ok =
+      v &&
+      typeof v.id === 'string' &&
+      v.id &&
+      typeof v.meaning === 'string' &&
+      v.meaning.trim() &&
+      typeof v.videoUrl === 'string' &&
+      !seen.has(v.id);
+
+    if (!ok) {
+      bad++;
+      continue;
+    }
+
     seen.add(v.id);
-    vocab.push({ id: v.id, meaning: v.meaning.trim(), videoUrl: v.videoUrl.trim(), category: typeof v.category === 'string' ? v.category : '', notes: typeof v.notes === 'string' ? v.notes : '', letter: letterOf(v.meaning) });
+
+    vocab.push({
+      id: v.id,
+      meaning: v.meaning.trim(),
+      videoUrl: v.videoUrl.trim(),
+
+      // Hier werden alle alten Kategorien vereinheitlicht.
+      category: normalizeCategory(
+        typeof v.category === 'string' ? v.category : ''
+      ),
+
+      notes: typeof v.notes === 'string' ? v.notes : '',
+      letter: letterOf(v.meaning)
+    });
   }
-  if (bad) notice(`${bad} Einträge in vocabulary.json waren unvollständig oder doppelt und wurden ignoriert.`);
-  if (!vocab.length) notice('Keine gültigen Vokabeln gefunden.');
-  vocab.sort((a, b) => a.meaning.localeCompare(b.meaning, 'de'));
-  byId = new Map(vocab.map(v => [v.id, v]));
-  sel = new Set(state.selection.filter(id => byId.has(id)));
-  buildLetters(); renderList();
-  aSel = new Set(state.alpha.selection.filter(id => id.startsWith('fingeralphabet-')).map(id => id.slice(15)).filter(aHasVideo));
-  aBuild(); aRefresh();
+
+  if (bad) {
+    notice(
+      `${bad} Einträge in vocabulary.json waren unvollständig oder doppelt und wurden ignoriert.`
+    );
+  }
+
+  if (!vocab.length) {
+    notice('Keine gültigen Vokabeln gefunden.');
+  }
+
+  vocab.sort((a, b) => {
+    return a.meaning.localeCompare(b.meaning, 'de');
+  });
+
+  byId = new Map(
+    vocab.map(v => [v.id, v])
+  );
+
+  sel = new Set(
+    state.selection.filter(id => byId.has(id))
+  );
+
+  buildLetters();
+  buildCategories();
+  renderList();
+
+  aSel = new Set(
+    state.alpha.selection
+      .filter(id => id.startsWith('fingeralphabet-'))
+      .map(id => id.slice(15))
+      .filter(aHasVideo)
+  );
+
+  aBuild();
+  aRefresh();
 }
+
 init();
